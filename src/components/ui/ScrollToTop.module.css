@@ -1,0 +1,25 @@
+.btn {
+    position: fixed;
+    bottom: 100px;
+    left: var(--space-lg);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 90;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn:hover {
+    color: var(--accent-primary);
+    border-color: rgba(233, 69, 96, 0.3);
+}

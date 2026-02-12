@@ -1,0 +1,324 @@
+.page {
+    padding: var(--space-2xl) 0 var(--space-4xl);
+}
+
+.wrapper {
+    max-width: 700px;
+}
+
+.pageTitle {
+    font-size: var(--fs-3xl);
+    font-weight: 800;
+    margin-bottom: var(--space-xl);
+}
+
+/* Progress */
+.progress {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--space-2xl);
+}
+
+.progressStep {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
+}
+
+.progressDot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    font-family: var(--font-heading);
+    background: var(--bg-card);
+    border: 2px solid var(--glass-border);
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: all var(--transition-base);
+}
+
+.progressDot.current {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: rgba(233, 69, 96, 0.1);
+    box-shadow: 0 0 12px rgba(233, 69, 96, 0.2);
+}
+
+.progressDot.done {
+    border-color: var(--accent-success);
+    background: var(--accent-success);
+    color: white;
+}
+
+.progressLabel {
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: color var(--transition-fast);
+    white-space: nowrap;
+}
+
+.progressLabel.progressActive {
+    color: var(--text-primary);
+}
+
+.progressLine {
+    flex: 1;
+    height: 2px;
+    background: var(--glass-border);
+    margin: 0 var(--space-sm);
+    transition: background var(--transition-base);
+}
+
+.progressLine.progressLineDone {
+    background: var(--accent-success);
+}
+
+/* Form Card */
+.formCard {
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-2xl);
+}
+
+.stepContent {
+    min-height: 300px;
+}
+
+.stepTitle {
+    font-size: var(--fs-xl);
+    font-weight: 700;
+    margin-bottom: var(--space-sm);
+}
+
+.stepDesc {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+    margin-bottom: var(--space-xl);
+}
+
+/* Fields */
+.field {
+    margin-bottom: var(--space-lg);
+}
+
+.label {
+    display: block;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 100px;
+    padding: var(--space-md) !important;
+    line-height: 1.6;
+}
+
+/* Image Grid */
+.imageGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+}
+
+.imageThumb {
+    aspect-ratio: 1;
+    border-radius: var(--radius-lg);
+    background: var(--bg-elevated);
+    border: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.thumbEmoji {
+    font-size: 2rem;
+}
+
+.coverBadge {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--accent-success);
+    background: rgba(0, 212, 170, 0.15);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+.removeImg {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+}
+
+.addImage {
+    aspect-ratio: 1;
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--glass-border);
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--fs-xs);
+    transition: all var(--transition-base);
+}
+
+.addImage:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+/* Category Picker */
+.categoryPicker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.catOption {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    background: var(--bg-elevated);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.catOption:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+}
+
+.catOption.catActive {
+    border-color: var(--cat-color);
+    color: var(--cat-color);
+    background: color-mix(in srgb, var(--cat-color) 10%, transparent);
+}
+
+/* Toggle Group */
+.toggleGroup {
+    display: flex;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+}
+
+.toggleBtn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    background: var(--bg-elevated);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.toggleBtn:hover {
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.toggleBtn.toggleActive {
+    background: rgba(233, 69, 96, 0.15);
+    border-color: rgba(233, 69, 96, 0.3);
+    color: var(--accent-primary);
+}
+
+/* Review Grid */
+.reviewGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.reviewItem {
+    padding: var(--space-md);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+}
+
+.reviewLabel {
+    display: block;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.reviewValue {
+    font-weight: 600;
+    font-size: var(--fs-sm);
+    text-transform: capitalize;
+}
+
+.reviewDesc {
+    padding: var(--space-md);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+}
+
+/* Nav Buttons */
+.navButtons {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--glass-border);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .imageGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .progressLabel {
+        display: none;
+    }
+
+    .progressStep {
+        gap: 0;
+    }
+
+    .reviewGrid {
+        grid-template-columns: 1fr;
+    }
+}

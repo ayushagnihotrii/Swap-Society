@@ -1,0 +1,163 @@
+.card {
+    display: block;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    transition: all var(--transition-base);
+    text-decoration: none;
+    color: inherit;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.card:hover .imageWrap {
+    transform: scale(1.03);
+}
+
+/* Image */
+.imageWrap {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform var(--transition-slow);
+}
+
+.emoji {
+    font-size: 3.5rem;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.topRow {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    right: var(--space-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+/* Like Button */
+.likeBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.likeBtn:hover {
+    background: rgba(0, 0, 0, 0.6);
+    transform: scale(1.1);
+}
+
+.likeBtn.liked {
+    color: var(--accent-primary);
+    background: rgba(233, 69, 96, 0.2);
+}
+
+/* Particle burst */
+.particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.particle {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    top: 50%;
+    left: 50%;
+    animation: particleBurst 0.5s ease-out forwards;
+    animation-delay: var(--delay);
+}
+
+@keyframes particleBurst {
+    0% {
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-18px);
+        opacity: 0;
+    }
+}
+
+/* Info */
+.info {
+    padding: var(--space-md);
+}
+
+.title {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meta {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.priceWrap {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.price {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--fs-lg);
+    color: var(--text-primary);
+}
+
+.per {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.condition {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.conditionDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
