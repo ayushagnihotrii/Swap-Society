@@ -369,6 +369,10 @@ h6 {
   }
 }
 
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
 /* --- Skeleton Loader --- */
 .skeleton {
   background: linear-gradient(90deg,

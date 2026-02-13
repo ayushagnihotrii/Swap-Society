@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search,
@@ -13,10 +14,15 @@ import {
     Heart,
     MessageCircle,
     LogIn,
+    LogOut,
     Sun,
     Moon,
+    ChevronDown,
+    Settings,
+    Package,
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
 import Logo from '@/components/ui/Logo';
 import styles from './Navbar.module.css';
 
@@ -26,12 +32,26 @@ export default function Navbar() {
     const [searchFocused, setSearchFocused] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
     const { theme, toggleTheme } = useTheme();
+    const { user, profile, logOut } = useAuth();
+    const userMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Close user menu on outside click
+    useEffect(() => {
+        const handleClick = (e: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+                setShowUserMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
     }, []);
 
     const trendingSearches = ['MacBook Air', 'Textbooks', 'Nike Shoes', 'Bluetooth Speaker'];
@@ -46,6 +66,15 @@ export default function Navbar() {
         setSearchFocused(false);
         setTimeout(() => setShowSuggestions(false), 200);
     };
+
+    const handleLogout = async () => {
+        await logOut();
+        setShowUserMenu(false);
+        setMenuOpen(false);
+    };
+
+    const avatarUrl = profile?.avatar || user?.photoURL || '';
+    const displayName = profile?.name || user?.displayName || 'User';
 
     return (
         <>
@@ -179,10 +208,71 @@ export default function Navbar() {
                             </motion.div>
                         </button>
 
-                        <Link href="/auth/login" className={`btn btn-secondary ${styles.authBtn}`}>
-                            <LogIn size={16} />
-                            <span>Login</span>
-                        </Link>
+                        {/* Auth: User Menu or Login Button */}
+                        {user ? (
+                            <div className={styles.userMenuContainer} ref={userMenuRef}>
+                                <button
+                                    className={styles.avatarBtn}
+                                    onClick={() => setShowUserMenu(!showUserMenu)}
+                                    aria-label="User menu"
+                                >
+                                    {avatarUrl ? (
+                                        <Image
+                                            src={avatarUrl}
+                                            alt={displayName}
+                                            width={32}
+                                            height={32}
+                                            className={styles.avatarImg}
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <div className={styles.avatarFallback}>
+                                            {displayName.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    <ChevronDown size={14} className={`${styles.chevron} ${showUserMenu ? styles.chevronUp : ''}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {showUserMenu && (
+                                        <motion.div
+                                            className={styles.userDropdown}
+                                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                                            transition={{ duration: 0.15 }}
+                                        >
+                                            <div className={styles.userDropdownHeader}>
+                                                <p className={styles.userName}>{displayName}</p>
+                                                <p className={styles.userEmail}>{user.email}</p>
+                                            </div>
+                                            <div className={styles.userDropdownDivider} />
+                                            <Link href="/profile" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
+                                                <User size={16} /> My Profile
+                                            </Link>
+                                            <Link href="/listing/create" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
+                                                <Package size={16} /> My Listings
+                                            </Link>
+                                            <Link href="/wishlist" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
+                                                <Heart size={16} /> Wishlist
+                                            </Link>
+                                            <Link href="#" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
+                                                <Settings size={16} /> Settings
+                                            </Link>
+                                            <div className={styles.userDropdownDivider} />
+                                            <button className={styles.userDropdownItem} onClick={handleLogout}>
+                                                <LogOut size={16} /> Log Out
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        ) : (
+                            <Link href="/auth/login" className={`btn btn-secondary ${styles.authBtn}`}>
+                                <LogIn size={16} />
+                                <span>Login</span>
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile Menu Toggle */}
@@ -215,6 +305,30 @@ export default function Navbar() {
                                 aria-label="Search items"
                             />
                         </div>
+
+                        {user && (
+                            <div className={styles.mobileUserInfo}>
+                                {avatarUrl ? (
+                                    <Image
+                                        src={avatarUrl}
+                                        alt={displayName}
+                                        width={40}
+                                        height={40}
+                                        className={styles.avatarImg}
+                                        unoptimized
+                                    />
+                                ) : (
+                                    <div className={styles.avatarFallback} style={{ width: 40, height: 40, fontSize: 16 }}>
+                                        {displayName.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                                <div>
+                                    <p className={styles.userName}>{displayName}</p>
+                                    <p className={styles.userEmail}>{user.email}</p>
+                                </div>
+                            </div>
+                        )}
+
                         <Link href="/explore" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
                             Explore
                         </Link>
@@ -230,19 +344,37 @@ export default function Navbar() {
                         <Link href="/cart" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
                             Cart
                         </Link>
+
+                        {user && (
+                            <Link href="/profile" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+                                My Profile
+                            </Link>
+                        )}
+
                         <div className={styles.mobileDivider} />
                         <button className={styles.themeMobileBtn} onClick={toggleTheme}>
                             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                             {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                         </button>
-                        <Link
-                            href="/auth/login"
-                            className={`btn btn-primary btn-full ${styles.mobileAuthBtn}`}
-                            onClick={() => setMenuOpen(false)}
-                        >
-                            <LogIn size={16} />
-                            Login / Sign Up
-                        </Link>
+
+                        {user ? (
+                            <button
+                                className={`btn btn-secondary btn-full ${styles.mobileAuthBtn}`}
+                                onClick={handleLogout}
+                            >
+                                <LogOut size={16} />
+                                Log Out
+                            </button>
+                        ) : (
+                            <Link
+                                href="/auth/login"
+                                className={`btn btn-primary btn-full ${styles.mobileAuthBtn}`}
+                                onClick={() => setMenuOpen(false)}
+                            >
+                                <LogIn size={16} />
+                                Login / Sign Up
+                            </Link>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

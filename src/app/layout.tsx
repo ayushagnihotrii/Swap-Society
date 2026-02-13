@@ -7,6 +7,7 @@ import ScrollToTop from '@/components/ui/ScrollToTop';
 import PageTransition from '@/components/providers/PageTransition';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import AuthProvider from '@/components/providers/AuthProvider';
 
 export const metadata: Metadata = {
   title: 'SwapSociety — Rent & Buy from Fellow Students',
@@ -30,13 +31,15 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <ToastProvider>
-            <Navbar />
-            <main className="page-wrapper">
-              <PageTransition>{children}</PageTransition>
-            </main>
-            <Footer />
-            <MobileTabBar />
-            <ScrollToTop />
+            <AuthProvider>
+              <Navbar />
+              <main className="page-wrapper">
+                <PageTransition>{children}</PageTransition>
+              </main>
+              <Footer />
+              <MobileTabBar />
+              <ScrollToTop />
+            </AuthProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

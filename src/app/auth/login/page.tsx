@@ -2,20 +2,49 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 export default function LoginPage() {
     const [showPass, setShowPass] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const { logIn, googleSignIn } = useAuth();
+    const { showToast } = useToast();
+    const router = useRouter();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Firebase auth will be integrated here
-        alert('Login functionality coming soon!');
+        setSubmitting(true);
+        try {
+            await logIn(email, password);
+            showToast('Welcome back! 🎉', 'success');
+            router.push('/');
+        } catch (err: unknown) {
+            const msg =
+                err instanceof Error ? err.message.replace('Firebase: ', '') : 'Login failed';
+            showToast(msg, 'error');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleGoogle = async () => {
+        try {
+            await googleSignIn();
+            showToast('Signed in with Google! 🎉', 'success');
+            router.push('/');
+        } catch (err: unknown) {
+            const msg =
+                err instanceof Error ? err.message.replace('Firebase: ', '') : 'Google sign-in failed';
+            showToast(msg, 'error');
+        }
     };
 
     return (
@@ -37,7 +66,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Google Sign In */}
-                <button className={styles.googleBtn}>
+                <button className={styles.googleBtn} onClick={handleGoogle} type="button">
                     <svg width="18" height="18" viewBox="0 0 24 24">
                         <path
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -73,6 +102,7 @@ export default function LoginPage() {
                             onChange={(e) => setEmail(e.target.value)}
                             className={styles.input}
                             required
+                            disabled={submitting}
                         />
                     </div>
 
@@ -85,6 +115,7 @@ export default function LoginPage() {
                             onChange={(e) => setPassword(e.target.value)}
                             className={styles.input}
                             required
+                            disabled={submitting}
                         />
                         <button
                             type="button"
@@ -95,8 +126,16 @@ export default function LoginPage() {
                         </button>
                     </div>
 
-                    <button type="submit" className="btn btn-primary btn-full btn-lg">
-                        Log In <ArrowRight size={18} />
+                    <button
+                        type="submit"
+                        className="btn btn-primary btn-full btn-lg"
+                        disabled={submitting}
+                    >
+                        {submitting ? (
+                            <Loader2 size={18} className="spin" />
+                        ) : (
+                            <>Log In <ArrowRight size={18} /></>
+                        )}
                     </button>
                 </form>
 
