@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, IndianRupee } from 'lucide-react';
+import { X, Send, IndianRupee, Loader2 } from 'lucide-react';
 import { Listing } from '@/types';
 import { formatPrice } from '@/lib/utils';
+import { createOffer } from '@/lib/offers';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
 import styles from './MakeOfferModal.module.css';
 
@@ -17,6 +19,8 @@ interface MakeOfferModalProps {
 export default function MakeOfferModal({ listing, isOpen, onClose }: MakeOfferModalProps) {
     const [offer, setOffer] = useState('');
     const [message, setMessage] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const { user, profile } = useAuth();
     const { showToast } = useToast();
 
     const suggestedPrices = [
@@ -25,12 +29,38 @@ export default function MakeOfferModal({ listing, isOpen, onClose }: MakeOfferMo
         Math.round(listing.price * 0.9),
     ];
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!offer) return;
-        showToast(`Offer of ₹${offer} sent to ${listing.sellerName}! 🤝`, 'success');
-        onClose();
-        setOffer('');
-        setMessage('');
+        if (!user || !profile) {
+            showToast('Please log in to make an offer', 'error');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            await createOffer({
+                listingId: listing.id,
+                listingTitle: listing.title,
+                listingImage: listing.images[0],
+                buyerId: user.uid,
+                buyerName: profile.name || user.displayName || 'User',
+                buyerAvatar: profile.avatar || user.photoURL || '',
+                sellerId: listing.sellerId,
+                sellerName: listing.sellerName,
+                offerPrice: Number(offer),
+                message,
+                isRental: false,
+            });
+            showToast(`Offer of ₹${offer} sent to ${listing.sellerName}! 🤝`, 'success');
+            onClose();
+            setOffer('');
+            setMessage('');
+        } catch (err) {
+            console.error('Create offer error:', err);
+            showToast('Failed to send offer. Please try again.', 'error');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -104,9 +134,13 @@ export default function MakeOfferModal({ listing, isOpen, onClose }: MakeOfferMo
                         <button
                             className="btn btn-primary btn-full btn-lg"
                             onClick={handleSubmit}
-                            disabled={!offer}
+                            disabled={!offer || submitting}
                         >
-                            <Send size={18} /> Send Offer
+                            {submitting ? (
+                                <><Loader2 size={18} className="spin" /> Sending...</>
+                            ) : (
+                                <><Send size={18} /> Send Offer</>
+                            )}
                         </button>
                     </motion.div>
                 </>

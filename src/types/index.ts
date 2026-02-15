@@ -4,8 +4,9 @@
 
 export type ListingType = 'rent' | 'sale' | 'both';
 export type ListingCondition = 'like-new' | 'good' | 'fair' | 'well-used';
-export type ListingStatus = 'active' | 'sold' | 'rented' | 'paused';
+export type ListingStatus = 'active' | 'sold' | 'rented' | 'paused' | 'deleted';
 export type OrderStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
+export type OfferStatus = 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled';
 export type RentalDuration = 'day' | 'week' | 'month';
 
 export interface User {
@@ -81,6 +82,8 @@ export interface CartItem {
   quantity: number;
   isRental: boolean;
   rentalDays?: number;
+  rentalStartDate?: string;
+  rentalEndDate?: string;
 }
 
 export interface Message {
@@ -125,4 +128,25 @@ export interface FilterState {
   priceMax: number;
   sortBy: 'newest' | 'price-asc' | 'price-desc' | 'popular';
   search: string;
+}
+
+export interface Offer {
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  listingImage?: string;
+  buyerId: string;
+  buyerName: string;
+  buyerAvatar: string;
+  sellerId: string;
+  sellerName: string;
+  offerPrice: number;
+  message: string;
+  isRental: boolean;
+  rentalStartDate?: string;
+  rentalEndDate?: string;
+  rentalDays?: number;
+  status: OfferStatus;
+  createdAt: string;
+  updatedAt: string;
 }

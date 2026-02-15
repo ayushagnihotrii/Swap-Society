@@ -21,6 +21,7 @@ import {
     ChevronDown,
     Settings,
     Package,
+    HandCoins,
 } from 'lucide-react';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -252,8 +253,11 @@ export default function Navbar() {
                                             <Link href="/profile" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
                                                 <User size={16} /> My Profile
                                             </Link>
-                                            <Link href="/listing/create" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
+                                            <Link href="/my-listings" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
                                                 <Package size={16} /> My Listings
+                                            </Link>
+                                            <Link href="/offers" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
+                                                <HandCoins size={16} /> Offers
                                             </Link>
                                             <Link href="/messages" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
                                                 <MessageCircle size={16} /> Messages
@@ -351,9 +355,17 @@ export default function Navbar() {
                         </Link>
 
                         {user && (
-                            <Link href="/profile" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-                                My Profile
-                            </Link>
+                            <>
+                                <Link href="/profile" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+                                    My Profile
+                                </Link>
+                                <Link href="/my-listings" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+                                    My Listings
+                                </Link>
+                                <Link href="/offers" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+                                    Offers
+                                </Link>
+                            </>
                         )}
 
                         <div className={styles.mobileDivider} />

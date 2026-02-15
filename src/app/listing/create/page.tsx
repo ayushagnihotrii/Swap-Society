@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ImagePlus,
@@ -9,15 +10,26 @@ import {
     Check,
     Upload,
     X,
+    Loader2,
 } from 'lucide-react';
 import { CATEGORIES } from '@/lib/utils';
+import { createListing } from '@/lib/listings';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { useToast } from '@/components/ui/Toast';
+import ProtectedRoute from '@/components/providers/ProtectedRoute';
 import { Category, ListingCondition, ListingType, RentalDuration } from '@/types';
 import styles from './page.module.css';
 
 const STEPS = ['Photos', 'Details', 'Pricing', 'Review'];
 
-export default function CreateListingPage() {
+function CreateListingContent() {
+    const router = useRouter();
+    const { user, profile } = useAuth();
+    const { showToast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const [step, setStep] = useState(0);
+    const [submitting, setSubmitting] = useState(false);
 
     // Form state
     const [title, setTitle] = useState('');
@@ -28,18 +40,72 @@ export default function CreateListingPage() {
     const [price, setPrice] = useState('');
     const [rentalDuration, setRentalDuration] = useState<RentalDuration>('day');
     const [deposit, setDeposit] = useState('');
-    const [images, setImages] = useState<string[]>([]);
+
+    // Image state — store actual File objects + preview URLs
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
 
     const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
     const prev = () => setStep((s) => Math.max(s - 1, 0));
 
-    const handleSubmit = () => {
-        alert('Listing published! 🎉 (Firebase integration coming soon)');
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        const remaining = 5 - imageFiles.length;
+        const toAdd = files.slice(0, remaining);
+
+        const newFiles = [...imageFiles, ...toAdd];
+        const newPreviews = [...imagePreviews, ...toAdd.map((f) => URL.createObjectURL(f))];
+
+        setImageFiles(newFiles);
+        setImagePreviews(newPreviews);
+
+        // Reset input so the same file can be selected again
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const addMockImage = () => {
-        if (images.length < 5) {
-            setImages([...images, `image-${images.length + 1}`]);
+    const removeImage = (index: number) => {
+        URL.revokeObjectURL(imagePreviews[index]);
+        setImageFiles((prev) => prev.filter((_, i) => i !== index));
+        setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = async () => {
+        if (!user || !profile) {
+            showToast('Please log in first', 'error');
+            return;
+        }
+        if (!title || !category) {
+            showToast('Please fill in all required fields', 'error');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const listingData = {
+                title,
+                description,
+                category: category as Category,
+                condition,
+                listingType,
+                price: Number(price) || 0,
+                rentalDuration: (listingType === 'rent' || listingType === 'both') ? rentalDuration : undefined,
+                deposit: (listingType === 'rent' || listingType === 'both') ? (Number(deposit) || 0) : undefined,
+                sellerId: user.uid,
+                sellerName: profile.name || user.displayName || 'User',
+                sellerAvatar: profile.avatar || user.photoURL || '',
+                sellerUniversity: profile.university || '',
+                sellerRating: 0,
+                status: 'active' as const,
+            };
+
+            const id = await createListing(listingData, imageFiles);
+            showToast('Listing published! 🎉', 'success');
+            router.push(`/listing/${id}`);
+        } catch (err) {
+            console.error('Create listing error:', err);
+            showToast('Failed to create listing. Please try again.', 'error');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -78,18 +144,41 @@ export default function CreateListingPage() {
                                 <h2 className={styles.stepTitle}>Upload Photos</h2>
                                 <p className={styles.stepDesc}>Add up to 5 photos. The first one will be the cover image.</p>
 
+                                {/* Hidden file input */}
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={handleFileSelect}
+                                    style={{ display: 'none' }}
+                                />
+
                                 <div className={styles.imageGrid}>
-                                    {images.map((img, i) => (
-                                        <div key={img} className={styles.imageThumb}>
-                                            <span className={styles.thumbEmoji}>📸</span>
+                                    {imagePreviews.map((preview, i) => (
+                                        <div key={i} className={styles.imageThumb}>
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={preview}
+                                                alt={`Preview ${i + 1}`}
+                                                style={{
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    objectFit: 'cover',
+                                                    borderRadius: 'inherit',
+                                                }}
+                                            />
                                             {i === 0 && <span className={styles.coverBadge}>Cover</span>}
-                                            <button className={styles.removeImg} onClick={() => setImages(images.filter((_, j) => j !== i))}>
+                                            <button className={styles.removeImg} onClick={() => removeImage(i)}>
                                                 <X size={12} />
                                             </button>
                                         </div>
                                     ))}
-                                    {images.length < 5 && (
-                                        <button className={styles.addImage} onClick={addMockImage}>
+                                    {imageFiles.length < 5 && (
+                                        <button
+                                            className={styles.addImage}
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
                                             <ImagePlus size={24} />
                                             <span>Add Photo</span>
                                         </button>
@@ -254,7 +343,7 @@ export default function CreateListingPage() {
                                     </div>
                                     <div className={styles.reviewItem}>
                                         <span className={styles.reviewLabel}>Photos</span>
-                                        <span className={styles.reviewValue}>{images.length} uploaded</span>
+                                        <span className={styles.reviewValue}>{imageFiles.length} uploaded</span>
                                     </div>
                                 </div>
 
@@ -269,7 +358,7 @@ export default function CreateListingPage() {
                     {/* Navigation */}
                     <div className={styles.navButtons}>
                         {step > 0 && (
-                            <button className="btn btn-secondary" onClick={prev}>
+                            <button className="btn btn-secondary" onClick={prev} disabled={submitting}>
                                 <ArrowLeft size={16} /> Back
                             </button>
                         )}
@@ -279,13 +368,33 @@ export default function CreateListingPage() {
                                 Continue <ArrowRight size={16} />
                             </button>
                         ) : (
-                            <button className="btn btn-primary btn-lg" onClick={handleSubmit}>
-                                <Upload size={18} /> Publish Listing
+                            <button
+                                className="btn btn-primary btn-lg"
+                                onClick={handleSubmit}
+                                disabled={submitting}
+                            >
+                                {submitting ? (
+                                    <>
+                                        <Loader2 size={18} className="spin" /> Publishing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload size={18} /> Publish Listing
+                                    </>
+                                )}
                             </button>
                         )}
                     </div>
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CreateListingPage() {
+    return (
+        <ProtectedRoute>
+            <CreateListingContent />
+        </ProtectedRoute>
     );
 }

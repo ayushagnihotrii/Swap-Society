@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -14,29 +14,97 @@ import {
     Shield,
     ChevronLeft,
     HandCoins,
+    Loader2,
+    Calendar,
 } from 'lucide-react';
-import { generateMockListings, formatPrice, timeAgo, getCategoryInfo } from '@/lib/utils';
+import { formatPrice, timeAgo, getCategoryInfo } from '@/lib/utils';
+import { getListing } from '@/lib/listings';
 import { useToast } from '@/components/ui/Toast';
 import { useCart } from '@/components/providers/CartProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
 import MakeOfferModal from '@/components/listing/MakeOfferModal';
+import type { Listing } from '@/types';
 import styles from './page.module.css';
 
 export default function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const listings = generateMockListings();
-    const listing = listings.find((l) => l.id === id) || listings[0];
-    const categoryInfo = getCategoryInfo(listing.category);
+    const [listing, setListing] = useState<Listing | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [activeImage, setActiveImage] = useState(0);
 
     const [liked, setLiked] = useState(false);
     const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
     const [offerOpen, setOfferOpen] = useState(false);
     const { showToast } = useToast();
     const { addToCart } = useCart();
+    const { user } = useAuth();
 
+    // Rental date state
+    const [rentalStart, setRentalStart] = useState('');
+    const [rentalEnd, setRentalEnd] = useState('');
+
+    useEffect(() => {
+        setLoading(true);
+        getListing(id).then((l) => {
+            setListing(l);
+            setLoading(false);
+        });
+    }, [id]);
+
+    const rentalCalc = useMemo(() => {
+        if (!listing || !rentalStart || !rentalEnd) return null;
+        const start = new Date(rentalStart);
+        const end = new Date(rentalEnd);
+        if (end <= start) return null;
+
+        const diffMs = end.getTime() - start.getTime();
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        let units = diffDays;
+        if (listing.rentalDuration === 'week') units = Math.ceil(diffDays / 7);
+        if (listing.rentalDuration === 'month') units = Math.ceil(diffDays / 30);
+
+        const rentalCost = listing.price * units;
+        const deposit = listing.deposit || 0;
+        return { diffDays, units, rentalCost, deposit, total: rentalCost + deposit };
+    }, [listing, rentalStart, rentalEnd]);
+
+    if (loading) {
+        return (
+            <div className={styles.page}>
+                <div className="container">
+                    <div className={styles.skeleton}>
+                        <Loader2 size={32} className="spin" style={{ color: 'var(--accent-primary)' }} />
+                        <p>Loading listing...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!listing) {
+        return (
+            <div className={styles.page}>
+                <div className="container">
+                    <div className={styles.notFound}>
+                        <h2 className={styles.notFoundTitle}>Listing Not Found</h2>
+                        <p className={styles.notFoundDesc}>This listing may have been removed or doesn&apos;t exist.</p>
+                        <Link href="/explore" className="btn btn-primary">
+                            Browse Listings
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const categoryInfo = getCategoryInfo(listing.category);
     const badgeClass =
         listing.listingType === 'rent' ? 'badge-rent' : listing.listingType === 'sale' ? 'badge-sale' : 'badge-rent';
     const badgeLabel =
         listing.listingType === 'rent' ? 'For Rent' : listing.listingType === 'sale' ? 'For Sale' : 'Rent / Buy';
+    const hasRealImages = listing.images.length > 0 && !listing.images[0].includes('placeholder');
+    const isRentable = listing.listingType === 'rent' || listing.listingType === 'both';
 
     const handleLike = () => {
         setLiked(!liked);
@@ -51,6 +119,17 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         navigator.clipboard.writeText(window.location.href);
         showToast('Link copied to clipboard! 📋', 'success');
     };
+
+    const handleRentNow = () => {
+        if (!rentalStart || !rentalEnd || !rentalCalc) {
+            showToast('Please select rental dates first', 'error');
+            return;
+        }
+        addToCart(listing, true, rentalCalc.diffDays);
+        showToast('Rental added to cart! 🛒', 'success');
+    };
+
+    const todayStr = new Date().toISOString().split('T')[0];
 
     return (
         <div className={styles.page}>
@@ -70,17 +149,43 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <div
-                            className={styles.mainImage}
-                            style={{
-                                background: `linear-gradient(135deg, ${categoryInfo.color}33, ${categoryInfo.color}11)`,
-                            }}
-                        >
-                            <span className={styles.imageEmoji}>{categoryInfo.icon}</span>
-                            <div className={styles.imageBadges}>
-                                <span className={`badge ${badgeClass}`}>{badgeLabel}</span>
+                        {hasRealImages ? (
+                            <>
+                                <div className={styles.mainImageReal}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={listing.images[activeImage]} alt={listing.title} />
+                                    <div className={styles.imageBadges}>
+                                        <span className={`badge ${badgeClass}`}>{badgeLabel}</span>
+                                    </div>
+                                </div>
+                                {listing.images.length > 1 && (
+                                    <div className={styles.thumbnailStrip}>
+                                        {listing.images.map((img, i) => (
+                                            <div
+                                                key={i}
+                                                className={`${styles.thumbImg} ${i === activeImage ? styles.thumbActive : ''}`}
+                                                onClick={() => setActiveImage(i)}
+                                            >
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={img} alt={`${listing.title} ${i + 1}`} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div
+                                className={styles.mainImage}
+                                style={{
+                                    background: `linear-gradient(135deg, ${categoryInfo.color}33, ${categoryInfo.color}11)`,
+                                }}
+                            >
+                                <span className={styles.imageEmoji}>{categoryInfo.icon}</span>
+                                <div className={styles.imageBadges}>
+                                    <span className={`badge ${badgeClass}`}>{badgeLabel}</span>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </motion.div>
 
                     {/* Right — Details */}
@@ -113,7 +218,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                         <div className={styles.pricingCard}>
                             <div className={styles.priceRow}>
                                 <span className={styles.price}>{formatPrice(listing.price)}</span>
-                                {listing.listingType === 'rent' && listing.rentalDuration && (
+                                {isRentable && listing.rentalDuration && (
                                     <span className={styles.pricePer}>/ {listing.rentalDuration}</span>
                                 )}
                             </div>
@@ -123,6 +228,44 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                                 </span>
                             )}
                         </div>
+
+                        {/* Rental Date Picker */}
+                        {isRentable && (
+                            <div className={styles.rentalPicker}>
+                                <div className={styles.rentalPickerTitle}>
+                                    <Calendar size={14} style={{ display: 'inline', marginRight: '6px' }} />
+                                    Select Rental Dates
+                                </div>
+                                <div className={styles.rentalDates}>
+                                    <div>
+                                        <label>Start Date</label>
+                                        <input
+                                            type="date"
+                                            className="input"
+                                            min={todayStr}
+                                            value={rentalStart}
+                                            onChange={(e) => setRentalStart(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label>End Date</label>
+                                        <input
+                                            type="date"
+                                            className="input"
+                                            min={rentalStart || todayStr}
+                                            value={rentalEnd}
+                                            onChange={(e) => setRentalEnd(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                {rentalCalc && (
+                                    <div className={styles.rentalSummary}>
+                                        <span>{rentalCalc.diffDays} days ({rentalCalc.units} {listing.rentalDuration}{rentalCalc.units > 1 ? 's' : ''})</span>
+                                        <span className={styles.rentalTotal}>{formatPrice(rentalCalc.total)}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className={styles.metaGrid}>
                             <div className={styles.metaItem}>
@@ -136,7 +279,9 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                                         ? 'Like New'
                                         : listing.condition === 'good'
                                             ? 'Good Condition'
-                                            : 'Fair Condition'}
+                                            : listing.condition === 'fair'
+                                                ? 'Fair Condition'
+                                                : 'Well Used'}
                                 </span>
                             </div>
                             <div className={styles.metaItem}>
@@ -165,12 +310,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
                         {/* CTA Buttons */}
                         <div className={styles.ctaGroup}>
-                            {(listing.listingType === 'rent' || listing.listingType === 'both') && (
+                            {isRentable && (
                                 <button
                                     className="btn btn-primary btn-lg btn-full"
-                                    onClick={() => showToast('Rental request sent! The seller will respond soon 🔄', 'success')}
+                                    onClick={handleRentNow}
                                 >
                                     <ShoppingBag size={18} /> Rent Now
+                                    {rentalCalc ? ` — ${formatPrice(rentalCalc.total)}` : ''}
                                 </button>
                             )}
                             {(listing.listingType === 'sale' || listing.listingType === 'both') && (
@@ -186,7 +332,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                             )}
                             <button
                                 className={`btn btn-ghost btn-full ${styles.offerBtn}`}
-                                onClick={() => setOfferOpen(true)}
+                                onClick={() => {
+                                    if (!user) {
+                                        showToast('Please log in to make an offer', 'error');
+                                        return;
+                                    }
+                                    setOfferOpen(true);
+                                }}
                             >
                                 <HandCoins size={18} /> Make an Offer
                             </button>

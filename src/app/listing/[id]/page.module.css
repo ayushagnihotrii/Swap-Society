@@ -328,6 +328,119 @@
     line-height: 1.6;
 }
 
+/* Rental Date Picker */
+.rentalPicker {
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+}
+
+.rentalPickerTitle {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+    color: var(--text-secondary);
+}
+
+.rentalDates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.rentalDates label {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.rentalSummary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--glass-border);
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+}
+
+.rentalTotal {
+    font-weight: 700;
+    font-size: var(--fs-lg);
+    color: var(--accent-primary);
+}
+
+/* Image gallery for real images */
+.mainImageReal {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    position: relative;
+}
+
+.mainImageReal img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnailStrip {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+}
+
+.thumbImg {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+}
+
+.thumbImg.thumbActive {
+    border-color: var(--accent-primary);
+}
+
+.thumbImg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Loading skeleton */
+.skeleton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: var(--space-md);
+    color: var(--text-muted);
+}
+
+.notFound {
+    text-align: center;
+    padding: var(--space-4xl) 0;
+}
+
+.notFoundTitle {
+    font-size: var(--fs-2xl);
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+}
+
+.notFoundDesc {
+    color: var(--text-muted);
+    margin-bottom: var(--space-xl);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .layout {

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -14,7 +16,9 @@ import {
   Package,
 } from 'lucide-react';
 import ListingCard from '@/components/listing/ListingCard';
-import { CATEGORIES, generateMockListings } from '@/lib/utils';
+import { CATEGORIES } from '@/lib/utils';
+import { getListings } from '@/lib/listings';
+import type { Listing } from '@/types';
 import styles from './page.module.css';
 
 const fadeUp = {
@@ -28,7 +32,11 @@ const stagger = {
 };
 
 export default function HomePage() {
-  const listings = generateMockListings();
+  const [listings, setListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    getListings({ sortBy: 'newest', limitCount: 6 }).then(setListings);
+  }, []);
 
   return (
     <div className={styles.page}>

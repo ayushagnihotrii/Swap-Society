@@ -1,72 +1,67 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     SlidersHorizontal,
     X,
     ChevronDown,
     Search,
+    Loader2,
 } from 'lucide-react';
 import ListingCard from '@/components/listing/ListingCard';
-import { CATEGORIES, generateMockListings } from '@/lib/utils';
-import { Category, ListingType, ListingCondition } from '@/types';
+import { CATEGORIES } from '@/lib/utils';
+import { getListings } from '@/lib/listings';
+import { Category, ListingType, ListingCondition, Listing } from '@/types';
 import styles from './page.module.css';
 
 type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'popular';
 
-export default function ExplorePage() {
-    const allListings = generateMockListings();
+function ExploreContent() {
+    const searchParams = useSearchParams();
+    const initialCategory = (searchParams.get('category') as Category) || 'all';
+    const initialSearch = searchParams.get('q') || '';
 
-    const [search, setSearch] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
+    const [listings, setListings] = useState<Listing[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const [search, setSearch] = useState(initialSearch);
+    const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>(initialCategory);
     const [listingType, setListingType] = useState<ListingType | 'all'>('all');
     const [condition, setCondition] = useState<ListingCondition | 'all'>('all');
     const [sortBy, setSortBy] = useState<SortOption>('newest');
+    const [priceMin, setPriceMin] = useState('');
+    const [priceMax, setPriceMax] = useState('');
     const [filterOpen, setFilterOpen] = useState(false);
 
-    const filtered = useMemo(() => {
-        let result = [...allListings];
+    const fetchListings = useCallback(async () => {
+        setLoading(true);
+        try {
+            const results = await getListings({
+                category: selectedCategory,
+                condition,
+                listingType,
+                sortBy,
+                search: search || undefined,
+                priceMin: priceMin ? Number(priceMin) : undefined,
+                priceMax: priceMax ? Number(priceMax) : undefined,
+            });
+            setListings(results);
+        } catch (err) {
+            console.error('Failed to fetch listings:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedCategory, condition, listingType, sortBy, search, priceMin, priceMax]);
 
-        if (search) {
-            const q = search.toLowerCase();
-            result = result.filter(
-                (l) =>
-                    l.title.toLowerCase().includes(q) ||
-                    l.description.toLowerCase().includes(q)
-            );
-        }
-        if (selectedCategory !== 'all') {
-            result = result.filter((l) => l.category === selectedCategory);
-        }
-        if (listingType !== 'all') {
-            result = result.filter(
-                (l) => l.listingType === listingType || l.listingType === 'both'
-            );
-        }
-        if (condition !== 'all') {
-            result = result.filter((l) => l.condition === condition);
-        }
-
-        switch (sortBy) {
-            case 'price-asc':
-                result.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                result.sort((a, b) => b.price - a.price);
-                break;
-            case 'popular':
-                result.sort((a, b) => b.likes - a.likes);
-                break;
-            default:
-                result.sort(
-                    (a, b) =>
-                        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-                );
-        }
-
-        return result;
-    }, [allListings, search, selectedCategory, listingType, condition, sortBy]);
+    useEffect(() => {
+        // Debounce the search
+        const timer = setTimeout(() => {
+            fetchListings();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [fetchListings]);
 
     const clearFilters = () => {
         setSelectedCategory('all');
@@ -74,13 +69,17 @@ export default function ExplorePage() {
         setCondition('all');
         setSortBy('newest');
         setSearch('');
+        setPriceMin('');
+        setPriceMax('');
     };
 
     const hasFilters =
         selectedCategory !== 'all' ||
         listingType !== 'all' ||
         condition !== 'all' ||
-        search !== '';
+        search !== '' ||
+        priceMin !== '' ||
+        priceMax !== '';
 
     return (
         <div className={styles.page}>
@@ -90,7 +89,7 @@ export default function ExplorePage() {
                     <div>
                         <h1 className={styles.title}>Explore</h1>
                         <p className={styles.subtitle}>
-                            {filtered.length} items available
+                            {loading ? 'Loading...' : `${listings.length} items available`}
                         </p>
                     </div>
                 </div>
@@ -205,6 +204,29 @@ export default function ExplorePage() {
                                         ))}
                                     </div>
                                 </div>
+
+                                <div className={styles.filterGroup}>
+                                    <label className={styles.filterLabel}>Price Range (₹)</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <input
+                                            type="number"
+                                            placeholder="Min"
+                                            value={priceMin}
+                                            onChange={(e) => setPriceMin(e.target.value)}
+                                            className="input"
+                                            style={{ width: '100px' }}
+                                        />
+                                        <span style={{ color: 'var(--text-muted)' }}>—</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Max"
+                                            value={priceMax}
+                                            onChange={(e) => setPriceMax(e.target.value)}
+                                            className="input"
+                                            style={{ width: '100px' }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
                             {hasFilters && (
@@ -217,9 +239,14 @@ export default function ExplorePage() {
                 </AnimatePresence>
 
                 {/* Results */}
-                {filtered.length > 0 ? (
+                {loading ? (
+                    <div className={styles.empty}>
+                        <Loader2 size={32} className="spin" style={{ color: 'var(--accent-primary)' }} />
+                        <p className={styles.emptyDesc}>Loading listings...</p>
+                    </div>
+                ) : listings.length > 0 ? (
                     <div className={styles.grid}>
-                        {filtered.map((listing, i) => (
+                        {listings.map((listing, i) => (
                             <ListingCard key={listing.id} listing={listing} index={i} />
                         ))}
                     </div>
@@ -237,5 +264,13 @@ export default function ExplorePage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function ExplorePage() {
+    return (
+        <Suspense fallback={<div style={{ minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 size={32} className="spin" style={{ color: 'var(--accent-primary)' }} /></div>}>
+            <ExploreContent />
+        </Suspense>
     );
 }
