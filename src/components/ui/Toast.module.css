@@ -30,8 +30,8 @@
 }
 
 .toast.error {
-    background: rgba(233, 69, 96, 0.15);
-    border-color: rgba(233, 69, 96, 0.3);
+    background: rgba(151, 135, 243, 0.15);
+    border-color: rgba(151, 135, 243, 0.3);
 }
 
 .toast.warning {

@@ -6,8 +6,7 @@ import {
     onAuthStateChanged,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
     GoogleAuthProvider,
     signOut,
     updateProfile,
@@ -101,20 +100,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             return;
         }
 
-        // Handle Google redirect result
-        getRedirectResult(auth)
-            .then(async (result) => {
-                if (result?.user) {
-                    await saveUserProfile(result.user.uid, {
-                        name: result.user.displayName ?? 'User',
-                        email: result.user.email ?? '',
-                        avatar: result.user.photoURL ?? `https://api.dicebear.com/7.x/initials/svg?seed=U`,
-                        university: '',
-                    });
-                }
-            })
-            .catch(() => { });
-
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             setUser(firebaseUser);
             if (firebaseUser) {
@@ -154,11 +139,19 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         setProfile(p);
     }, []);
 
-    // Google sign-in (redirect-based for Safari compatibility)
+    // Google sign-in (popup-based)
     const googleSignIn = useCallback(async () => {
         if (!auth) throw new Error('Firebase not configured');
         const provider = new GoogleAuthProvider();
-        await signInWithRedirect(auth, provider);
+        const result = await signInWithPopup(auth, provider);
+        await saveUserProfile(result.user.uid, {
+            name: result.user.displayName ?? 'User',
+            email: result.user.email ?? '',
+            avatar: result.user.photoURL ?? `https://api.dicebear.com/7.x/initials/svg?seed=U`,
+            university: '',
+        });
+        const p = await fetchProfile(result.user.uid);
+        setProfile(p);
     }, []);
 
     // Log out

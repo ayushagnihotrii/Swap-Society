@@ -85,7 +85,7 @@
 .socialLink:hover {
     color: var(--accent-primary);
     border-color: var(--accent-primary);
-    background: rgba(233, 69, 96, 0.1);
+    background: rgba(151, 135, 243, 0.1);
     transform: translateY(-2px);
 }
 

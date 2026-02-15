@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useCart } from '@/components/providers/CartProvider';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +36,7 @@ export default function Navbar() {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const { theme, toggleTheme } = useTheme();
     const { user, profile, logOut } = useAuth();
+    const { cartCount } = useCart();
     const userMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -188,7 +190,7 @@ export default function Navbar() {
 
                         <Link href="/cart" className={styles.iconBtn} title="Cart" aria-label="Cart">
                             <ShoppingBag size={20} />
-                            <span className={styles.cartBadge}>2</span>
+                            {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
                         </Link>
 
                         {/* Theme Toggle */}
@@ -252,6 +254,9 @@ export default function Navbar() {
                                             </Link>
                                             <Link href="/listing/create" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
                                                 <Package size={16} /> My Listings
+                                            </Link>
+                                            <Link href="/messages" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
+                                                <MessageCircle size={16} /> Messages
                                             </Link>
                                             <Link href="/wishlist" className={styles.userDropdownItem} onClick={() => setShowUserMenu(false)}>
                                                 <Heart size={16} /> Wishlist

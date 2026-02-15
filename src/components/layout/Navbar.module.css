@@ -6,24 +6,24 @@
     height: var(--navbar-height);
     z-index: var(--z-sticky);
     transition: all var(--transition-base);
-    background: rgba(10, 10, 15, 0.6);
+    background: rgba(45, 39, 75, 0.6);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid transparent;
 }
 
 [data-theme="light"] .navbar {
-    background: rgba(245, 245, 250, 0.75);
+    background: rgba(234, 239, 254, 0.75);
 }
 
 .navbar.scrolled {
-    background: rgba(10, 10, 15, 0.9);
+    background: rgba(45, 39, 75, 0.9);
     border-bottom: 1px solid var(--glass-border);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="light"] .navbar.scrolled {
-    background: rgba(245, 245, 250, 0.92);
+    background: rgba(234, 239, 254, 0.92);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
 }
 
@@ -102,7 +102,7 @@
 .searchInput:focus {
     background: var(--bg-elevated);
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(233, 69, 96, 0.12);
+    box-shadow: 0 0 0 3px rgba(151, 135, 243, 0.12);
 }
 
 .searchActive .searchIcon {
@@ -450,7 +450,7 @@
 }
 
 .userDropdownItem:hover {
-    background: rgba(233, 69, 96, 0.08);
+    background: rgba(151, 135, 243, 0.08);
     color: var(--text-primary);
 }
 

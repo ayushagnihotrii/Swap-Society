@@ -21,5 +21,5 @@
 
 .btn:hover {
     color: var(--accent-primary);
-    border-color: rgba(233, 69, 96, 0.3);
+    border-color: rgba(151, 135, 243, 0.3);
 }

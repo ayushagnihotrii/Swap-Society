@@ -128,12 +128,12 @@
 
 .suggestBtn:hover {
     color: var(--text-primary);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(234, 239, 254, 0.15);
 }
 
 .suggestBtn.suggestActive {
-    background: rgba(233, 69, 96, 0.15);
-    border-color: rgba(233, 69, 96, 0.3);
+    background: rgba(151, 135, 243, 0.15);
+    border-color: rgba(151, 135, 243, 0.3);
     color: var(--accent-primary);
 }
 

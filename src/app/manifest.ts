@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
         description: 'The Gen Z student marketplace. Rent or buy from university students near you.',
         start_url: '/',
         display: 'standalone',
-        background_color: '#0A0A0F',
-        theme_color: '#E94560',
+        background_color: '#2D274B',
+        theme_color: '#9787F3',
         icons: [
             {
                 src: '/icon-192.png',

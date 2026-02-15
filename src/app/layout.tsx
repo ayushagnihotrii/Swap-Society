@@ -8,6 +8,7 @@ import PageTransition from '@/components/providers/PageTransition';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import AuthProvider from '@/components/providers/AuthProvider';
+import CartProvider from '@/components/providers/CartProvider';
 
 export const metadata: Metadata = {
   title: 'SwapSociety — Rent & Buy from Fellow Students',
@@ -32,13 +33,15 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <AuthProvider>
-              <Navbar />
-              <main className="page-wrapper">
-                <PageTransition>{children}</PageTransition>
-              </main>
-              <Footer />
-              <MobileTabBar />
-              <ScrollToTop />
+              <CartProvider>
+                <Navbar />
+                <main className="page-wrapper">
+                  <PageTransition>{children}</PageTransition>
+                </main>
+                <Footer />
+                <MobileTabBar />
+                <ScrollToTop />
+              </CartProvider>
             </AuthProvider>
           </ToastProvider>
         </ThemeProvider>

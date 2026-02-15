@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Trash2, ShoppingBag, PackageSearch } from 'lucide-react';
 import { generateMockListings, formatPrice, getCategoryInfo } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
+import { useCart } from '@/components/providers/CartProvider';
 import Link from 'next/link';
 import styles from './page.module.css';
 
@@ -12,6 +13,7 @@ export default function WishlistPage() {
     const allListings = generateMockListings();
     const [wishlist, setWishlist] = useState(allListings.slice(0, 4));
     const { showToast } = useToast();
+    const { addToCart } = useCart();
 
     const remove = (id: string) => {
         setWishlist((prev) => prev.filter((l) => l.id !== id));
@@ -68,7 +70,10 @@ export default function WishlistPage() {
                                         <div className={styles.actions}>
                                             <button
                                                 className={styles.buyBtn}
-                                                onClick={() => showToast('Added to cart! 🛒', 'success')}
+                                                onClick={() => {
+                                                    addToCart(listing);
+                                                    showToast('Added to cart! 🛒', 'success');
+                                                }}
                                                 aria-label="Add to cart"
                                             >
                                                 <ShoppingBag size={16} />

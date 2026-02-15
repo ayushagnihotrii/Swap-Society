@@ -86,9 +86,11 @@ export interface CartItem {
 export interface Message {
   id: string;
   senderId: string;
-  receiverId: string;
+  senderName: string;
+  senderAvatar: string;
   text: string;
   listingId?: string;
+  listingTitle?: string;
   read: boolean;
   createdAt: string;
 }
@@ -96,9 +98,11 @@ export interface Message {
 export interface Conversation {
   id: string;
   participants: string[];
+  participantNames: Record<string, string>;
+  participantAvatars: Record<string, string>;
   lastMessage: string;
   lastMessageAt: string;
-  unreadCount: number;
+  unreadCount: Record<string, number>;
 }
 
 export interface Order {

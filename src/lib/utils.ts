@@ -55,8 +55,8 @@ export function slugify(text: string): string {
 }
 
 export const CATEGORIES: CategoryInfo[] = [
-    { id: 'clothing', label: 'Clothing', icon: '👕', color: '#E94560' },
-    { id: 'electronics', label: 'Electronics', icon: '💻', color: '#7B2FF7' },
+    { id: 'clothing', label: 'Clothing', icon: '👕', color: '#9787F3' },
+    { id: 'electronics', label: 'Electronics', icon: '💻', color: '#6B5CE7' },
     { id: 'books', label: 'Books', icon: '📚', color: '#3B82F6' },
     { id: 'shoes', label: 'Shoes', icon: '👟', color: '#00D4AA' },
     { id: 'watches', label: 'Watches', icon: '⌚', color: '#FFB830' },

@@ -26,7 +26,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
                     width: 36,
                     height: 36,
                     border: '3px solid rgba(255,255,255,0.1)',
-                    borderTopColor: '#E94560',
+                    borderTopColor: '#9787F3',
                     borderRadius: '50%',
                     animation: 'spin 0.8s linear infinite',
                 }} />

@@ -98,13 +98,13 @@
 
 .actionBtn:hover {
     color: var(--text-primary);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(234, 239, 254, 0.15);
 }
 
 .actionBtn.liked {
     color: var(--accent-primary);
     border-color: var(--accent-primary);
-    background: rgba(233, 69, 96, 0.1);
+    background: rgba(151, 135, 243, 0.1);
 }
 
 .title {
@@ -223,13 +223,13 @@
 }
 
 .offerBtn {
-    border: 1px solid rgba(123, 47, 247, 0.25) !important;
+    border: 1px solid rgba(107, 92, 231, 0.25) !important;
     color: var(--accent-secondary) !important;
 }
 
 .offerBtn:hover {
-    border-color: rgba(123, 47, 247, 0.4) !important;
-    background: rgba(123, 47, 247, 0.08) !important;
+    border-color: rgba(107, 92, 231, 0.4) !important;
+    background: rgba(107, 92, 231, 0.08) !important;
 }
 
 .tabSection {

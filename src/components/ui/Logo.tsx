@@ -10,8 +10,8 @@ export default function Logo({ size = 28 }: { size?: number }) {
         >
             <defs>
                 <linearGradient id="ss-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#E94560" />
-                    <stop offset="100%" stopColor="#7B2FF7" />
+                    <stop offset="0%" stopColor="#9787F3" />
+                    <stop offset="100%" stopColor="#6B5CE7" />
                 </linearGradient>
             </defs>
             {/* Top arrow — curving right */}

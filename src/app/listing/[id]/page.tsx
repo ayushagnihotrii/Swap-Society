@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { generateMockListings, formatPrice, timeAgo, getCategoryInfo } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
+import { useCart } from '@/components/providers/CartProvider';
 import MakeOfferModal from '@/components/listing/MakeOfferModal';
 import styles from './page.module.css';
 
@@ -30,6 +31,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
     const [offerOpen, setOfferOpen] = useState(false);
     const { showToast } = useToast();
+    const { addToCart } = useCart();
 
     const badgeClass =
         listing.listingType === 'rent' ? 'badge-rent' : listing.listingType === 'sale' ? 'badge-sale' : 'badge-rent';
@@ -174,7 +176,10 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                             {(listing.listingType === 'sale' || listing.listingType === 'both') && (
                                 <button
                                     className="btn btn-secondary btn-lg btn-full"
-                                    onClick={() => showToast('Added to cart! 🛒', 'success')}
+                                    onClick={() => {
+                                        addToCart(listing);
+                                        showToast('Added to cart! 🛒', 'success');
+                                    }}
                                 >
                                     <ShoppingBag size={18} /> Buy Now — {formatPrice(listing.price)}
                                 </button>
