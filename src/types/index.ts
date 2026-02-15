@@ -15,6 +15,8 @@ export interface User {
   email: string;
   avatar: string;
   university: string;
+  department?: string;
+  year?: string;
   bio: string;
   isVerified: boolean;
   rating: number;

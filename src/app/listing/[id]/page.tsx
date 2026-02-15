@@ -291,22 +291,24 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                         </div>
 
                         {/* Seller Card */}
-                        <div className={styles.sellerCard}>
-                            <div className={styles.sellerAvatar}>
-                                {listing.sellerName.charAt(0)}
-                            </div>
-                            <div className={styles.sellerInfo}>
-                                <span className={styles.sellerName}>{listing.sellerName}</span>
-                                <div className={styles.sellerMeta}>
-                                    <MapPin size={12} />
-                                    <span>{listing.sellerUniversity}</span>
-                                    <span className={styles.sellerDot}>·</span>
-                                    <Star size={12} fill="var(--accent-warning)" stroke="var(--accent-warning)" />
-                                    <span>{listing.sellerRating}</span>
+                        <Link href={`/profile/${listing.sellerId}`} className={styles.sellerCardLink}>
+                            <div className={styles.sellerCard}>
+                                <div className={styles.sellerAvatar}>
+                                    {listing.sellerName.charAt(0)}
                                 </div>
+                                <div className={styles.sellerInfo}>
+                                    <span className={styles.sellerName}>{listing.sellerName}</span>
+                                    <div className={styles.sellerMeta}>
+                                        <MapPin size={12} />
+                                        <span>{listing.sellerUniversity}</span>
+                                        <span className={styles.sellerDot}>·</span>
+                                        <Star size={12} fill="var(--accent-warning)" stroke="var(--accent-warning)" />
+                                        <span>{listing.sellerRating}</span>
+                                    </div>
+                                </div>
+                                <span className="badge badge-verified">Verified</span>
                             </div>
-                            <span className="badge badge-verified">Verified</span>
-                        </div>
+                        </Link>
 
                         {/* CTA Buttons */}
                         <div className={styles.ctaGroup}>

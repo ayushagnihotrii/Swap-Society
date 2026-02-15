@@ -24,6 +24,8 @@ interface UserProfile {
     bio: string;
     isVerified: boolean;
     createdAt: string;
+    department?: string;
+    year?: string;
 }
 
 interface AuthContextType {
@@ -84,6 +86,8 @@ async function fetchProfile(uid: string): Promise<UserProfile | null> {
         bio: d.bio ?? '',
         isVerified: d.isVerified ?? false,
         createdAt: d.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
+        department: d.department ?? '',
+        year: d.year ?? '',
     };
 }
 
