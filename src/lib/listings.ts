@@ -13,6 +13,7 @@ import {
     limit,
     serverTimestamp,
     Timestamp,
+    increment,
 } from 'firebase/firestore';
 import {
     ref,
@@ -247,4 +248,17 @@ export async function deleteListing(id: string): Promise<void> {
         status: 'deleted',
         updatedAt: serverTimestamp(),
     });
+}
+
+// ── Increment views ────────────────────────────────────
+
+export async function incrementViews(id: string): Promise<void> {
+    if (!db) return;
+    try {
+        await updateDoc(doc(db, 'listings', id), {
+            views: increment(1),
+        });
+    } catch (err) {
+        console.error('incrementViews error:', err);
+    }
 }

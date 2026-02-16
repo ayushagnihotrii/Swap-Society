@@ -1,24 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Trash2, ShoppingBag, PackageSearch } from 'lucide-react';
-import { generateMockListings, formatPrice, getCategoryInfo } from '@/lib/utils';
+import { Heart, Trash2, ShoppingBag, PackageSearch, Loader2 } from 'lucide-react';
+import { formatPrice, getCategoryInfo } from '@/lib/utils';
+import { getWishlistListings, removeFromWishlist } from '@/lib/wishlist';
 import { useToast } from '@/components/ui/Toast';
 import { useCart } from '@/components/providers/CartProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
+import ProtectedRoute from '@/components/providers/ProtectedRoute';
 import Link from 'next/link';
+import type { Listing } from '@/types';
 import styles from './page.module.css';
 
-export default function WishlistPage() {
-    const allListings = generateMockListings();
-    const [wishlist, setWishlist] = useState(allListings.slice(0, 4));
+function WishlistContent() {
+    const { user } = useAuth();
     const { showToast } = useToast();
     const { addToCart } = useCart();
+    const [wishlist, setWishlist] = useState<Listing[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const remove = (id: string) => {
-        setWishlist((prev) => prev.filter((l) => l.id !== id));
-        showToast('Removed from wishlist', 'info');
+    useEffect(() => {
+        if (!user) return;
+        setLoading(true);
+        getWishlistListings(user.uid).then((listings) => {
+            setWishlist(listings);
+            setLoading(false);
+        });
+    }, [user]);
+
+    const remove = async (id: string) => {
+        if (!user) return;
+        try {
+            await removeFromWishlist(user.uid, id);
+            setWishlist((prev) => prev.filter((l) => l.id !== id));
+            showToast('Removed from wishlist', 'info');
+        } catch {
+            showToast('Failed to remove from wishlist', 'error');
+        }
     };
+
+    if (loading) {
+        return (
+            <div className={styles.page}>
+                <div className="container">
+                    <div className={styles.header}>
+                        <div>
+                            <h1 className={styles.title}>
+                                <Heart size={28} /> My Wishlist
+                            </h1>
+                            <p className={styles.subtitle}>Loading...</p>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem 0' }}>
+                        <Loader2 size={32} className="spin" style={{ color: 'var(--accent-primary)' }} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.page}>
@@ -50,11 +90,29 @@ export default function WishlistPage() {
                                         <Link href={`/listing/${listing.id}`} className={styles.cardInner}>
                                             <div
                                                 className={styles.image}
-                                                style={{
-                                                    background: `linear-gradient(135deg, ${cat.color}33, ${cat.color}11)`,
-                                                }}
+                                                style={
+                                                    listing.images.length > 0 && !listing.images[0].includes('placeholder')
+                                                        ? undefined
+                                                        : {
+                                                            background: `linear-gradient(135deg, ${cat.color}33, ${cat.color}11)`,
+                                                        }
+                                                }
                                             >
-                                                <span className={styles.emoji}>{cat.icon}</span>
+                                                {listing.images.length > 0 && !listing.images[0].includes('placeholder') ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img
+                                                        src={listing.images[0]}
+                                                        alt={listing.title}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover',
+                                                            borderRadius: 'inherit',
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <span className={styles.emoji}>{cat.icon}</span>
+                                                )}
                                             </div>
                                             <div className={styles.info}>
                                                 <h3 className={styles.itemTitle}>{listing.title}</h3>
@@ -111,5 +169,13 @@ export default function WishlistPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function WishlistPage() {
+    return (
+        <ProtectedRoute>
+            <WishlistContent />
+        </ProtectedRoute>
     );
 }

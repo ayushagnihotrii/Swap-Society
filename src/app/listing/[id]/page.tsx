@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
     Heart,
@@ -18,31 +19,42 @@ import {
     Calendar,
 } from 'lucide-react';
 import { formatPrice, timeAgo, getCategoryInfo } from '@/lib/utils';
-import { getListing } from '@/lib/listings';
+import { getListing, incrementViews } from '@/lib/listings';
+import { getReviewsForUser } from '@/lib/reviews';
+import { addToWishlist, removeFromWishlist, isInWishlist } from '@/lib/wishlist';
+import { findOrCreateConversation } from '@/lib/messages';
 import { useToast } from '@/components/ui/Toast';
 import { useCart } from '@/components/providers/CartProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import MakeOfferModal from '@/components/listing/MakeOfferModal';
-import type { Listing } from '@/types';
+import type { Listing, Review } from '@/types';
 import styles from './page.module.css';
 
 export default function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const router = useRouter();
     const [listing, setListing] = useState<Listing | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeImage, setActiveImage] = useState(0);
 
     const [liked, setLiked] = useState(false);
+    const [likeLoading, setLikeLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
     const [offerOpen, setOfferOpen] = useState(false);
+    const [chatLoading, setChatLoading] = useState(false);
     const { showToast } = useToast();
     const { addToCart } = useCart();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
+
+    // Reviews state
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
 
     // Rental date state
     const [rentalStart, setRentalStart] = useState('');
     const [rentalEnd, setRentalEnd] = useState('');
 
+    // Fetch listing
     useEffect(() => {
         setLoading(true);
         getListing(id).then((l) => {
@@ -50,6 +62,37 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             setLoading(false);
         });
     }, [id]);
+
+    // Increment view count (once per session)
+    useEffect(() => {
+        const viewKey = `viewed_${id}`;
+        if (!sessionStorage.getItem(viewKey)) {
+            sessionStorage.setItem(viewKey, '1');
+            incrementViews(id);
+        }
+    }, [id]);
+
+    // Check wishlist status
+    useEffect(() => {
+        if (!user) {
+            setLikeLoading(false);
+            return;
+        }
+        isInWishlist(user.uid, id).then((val) => {
+            setLiked(val);
+            setLikeLoading(false);
+        });
+    }, [user, id]);
+
+    // Fetch reviews when listing loads
+    useEffect(() => {
+        if (!listing) return;
+        setReviewsLoading(true);
+        getReviewsForUser(listing.sellerId).then((r) => {
+            setReviews(r);
+            setReviewsLoading(false);
+        });
+    }, [listing]);
 
     const rentalCalc = useMemo(() => {
         if (!listing || !rentalStart || !rentalEnd) return null;
@@ -106,12 +149,23 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     const hasRealImages = listing.images.length > 0 && !listing.images[0].includes('placeholder');
     const isRentable = listing.listingType === 'rent' || listing.listingType === 'both';
 
-    const handleLike = () => {
-        setLiked(!liked);
-        if (!liked) {
-            showToast(`Saved to wishlist ❤️`, 'success');
-        } else {
-            showToast('Removed from wishlist', 'info');
+    const handleLike = async () => {
+        if (!user) {
+            showToast('Please log in to save items', 'error');
+            return;
+        }
+        try {
+            if (liked) {
+                await removeFromWishlist(user.uid, id);
+                setLiked(false);
+                showToast('Removed from wishlist', 'info');
+            } else {
+                await addToWishlist(user.uid, id);
+                setLiked(true);
+                showToast('Saved to wishlist ❤️', 'success');
+            }
+        } catch {
+            showToast('Failed to update wishlist', 'error');
         }
     };
 
@@ -127,6 +181,36 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         }
         addToCart(listing, true, rentalCalc.diffDays);
         showToast('Rental added to cart! 🛒', 'success');
+    };
+
+    const handleChatWithSeller = async () => {
+        if (!user || !profile) {
+            showToast('Please log in to chat with the seller', 'error');
+            return;
+        }
+        if (user.uid === listing.sellerId) {
+            showToast('This is your own listing!', 'info');
+            return;
+        }
+
+        setChatLoading(true);
+        try {
+            const conversationId = await findOrCreateConversation(
+                user.uid,
+                profile.name || user.displayName || 'User',
+                profile.avatar || user.photoURL || '',
+                listing.sellerId,
+                listing.sellerName,
+                listing.sellerAvatar,
+                listing.id,
+                listing.title,
+            );
+            router.push(`/messages?conv=${conversationId}`);
+        } catch {
+            showToast('Failed to start conversation', 'error');
+        } finally {
+            setChatLoading(false);
+        }
     };
 
     const todayStr = new Date().toISOString().split('T')[0];
@@ -203,6 +287,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                                 <button
                                     className={`${styles.actionBtn} ${liked ? styles.liked : ''}`}
                                     onClick={handleLike}
+                                    disabled={likeLoading}
                                     aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'}
                                 >
                                     <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
@@ -344,8 +429,16 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                             >
                                 <HandCoins size={18} /> Make an Offer
                             </button>
-                            <button className={`btn btn-ghost btn-full ${styles.chatBtn}`}>
-                                <MessageCircle size={18} /> Chat with Seller
+                            <button
+                                className={`btn btn-ghost btn-full ${styles.chatBtn}`}
+                                onClick={handleChatWithSeller}
+                                disabled={chatLoading}
+                            >
+                                {chatLoading ? (
+                                    <><Loader2 size={18} className="spin" /> Opening chat...</>
+                                ) : (
+                                    <><MessageCircle size={18} /> Chat with Seller</>
+                                )}
                             </button>
                         </div>
                     </motion.div>
@@ -368,7 +461,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                             role="tab"
                             aria-selected={activeTab === 'reviews'}
                         >
-                            Reviews (12)
+                            Reviews ({reviews.length})
                         </button>
                     </div>
 
@@ -390,32 +483,38 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                             key="reviews"
                             role="tabpanel"
                         >
-                            {[
-                                { name: 'Ananya S.', rating: 5, text: 'Amazing product! Exactly as described.', time: '2 days ago' },
-                                { name: 'Vikram R.', rating: 4, text: 'Great condition. Seller was very responsive.', time: '1 week ago' },
-                                { name: 'Meera K.', rating: 5, text: 'Loved it! Will buy again from this seller.', time: '2 weeks ago' },
-                            ].map((review, i) => (
-                                <div key={i} className={styles.reviewCard}>
-                                    <div className={styles.reviewHeader}>
-                                        <div className={styles.reviewAvatar}>{review.name.charAt(0)}</div>
-                                        <div>
-                                            <span className={styles.reviewName}>{review.name}</span>
-                                            <div className={styles.reviewStars}>
-                                                {Array.from({ length: 5 }, (_, j) => (
-                                                    <Star
-                                                        key={j}
-                                                        size={12}
-                                                        fill={j < review.rating ? 'var(--accent-warning)' : 'transparent'}
-                                                        stroke={j < review.rating ? 'var(--accent-warning)' : 'var(--text-muted)'}
-                                                    />
-                                                ))}
-                                                <span className={styles.reviewTime}>{review.time}</span>
+                            {reviewsLoading ? (
+                                <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+                                    <Loader2 size={24} className="spin" style={{ color: 'var(--accent-primary)' }} />
+                                </div>
+                            ) : reviews.length > 0 ? (
+                                reviews.map((review) => (
+                                    <div key={review.id} className={styles.reviewCard}>
+                                        <div className={styles.reviewHeader}>
+                                            <div className={styles.reviewAvatar}>{review.reviewerName.charAt(0)}</div>
+                                            <div>
+                                                <span className={styles.reviewName}>{review.reviewerName}</span>
+                                                <div className={styles.reviewStars}>
+                                                    {Array.from({ length: 5 }, (_, j) => (
+                                                        <Star
+                                                            key={j}
+                                                            size={12}
+                                                            fill={j < review.rating ? 'var(--accent-warning)' : 'transparent'}
+                                                            stroke={j < review.rating ? 'var(--accent-warning)' : 'var(--text-muted)'}
+                                                        />
+                                                    ))}
+                                                    <span className={styles.reviewTime}>{timeAgo(review.createdAt)}</span>
+                                                </div>
                                             </div>
                                         </div>
+                                        <p className={styles.reviewText}>{review.comment}</p>
                                     </div>
-                                    <p className={styles.reviewText}>{review.text}</p>
+                                ))
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                                    <p>No reviews yet for this seller.</p>
                                 </div>
-                            ))}
+                            )}
                         </motion.div>
                     )}
                 </div>
