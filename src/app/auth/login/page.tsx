@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, UserCircle } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -15,7 +15,8 @@ export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const { logIn, googleSignIn } = useAuth();
+    const [guestLoading, setGuestLoading] = useState(false);
+    const { logIn, googleSignIn, guestSignIn } = useAuth();
     const { showToast } = useToast();
     const router = useRouter();
 
@@ -145,6 +146,35 @@ export default function LoginPage() {
                         Sign up
                     </Link>
                 </p>
+
+                <div className={styles.divider}>
+                    <span>or</span>
+                </div>
+
+                <button
+                    className={styles.guestBtn}
+                    type="button"
+                    disabled={guestLoading}
+                    onClick={async () => {
+                        setGuestLoading(true);
+                        try {
+                            await guestSignIn();
+                            showToast('Welcome, Guest! 👋', 'success');
+                            router.push('/');
+                        } catch (err: unknown) {
+                            const msg = err instanceof Error ? err.message.replace('Firebase: ', '') : 'Guest sign-in failed';
+                            showToast(msg, 'error');
+                        } finally {
+                            setGuestLoading(false);
+                        }
+                    }}
+                >
+                    {guestLoading ? (
+                        <Loader2 size={18} className="spin" />
+                    ) : (
+                        <><UserCircle size={18} /> Continue as Guest</>
+                    )}
+                </button>
             </motion.div>
         </div>
     );

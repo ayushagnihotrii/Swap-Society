@@ -7,6 +7,7 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signInWithPopup,
+    signInAnonymously,
     GoogleAuthProvider,
     signOut,
     updateProfile,
@@ -35,6 +36,7 @@ interface AuthContextType {
     signUp: (email: string, password: string, name: string, university: string) => Promise<void>;
     logIn: (email: string, password: string) => Promise<void>;
     googleSignIn: () => Promise<void>;
+    guestSignIn: () => Promise<void>;
     logOut: () => Promise<void>;
 }
 
@@ -158,6 +160,23 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         setProfile(p);
     }, []);
 
+    // Anonymous guest sign-in
+    const guestSignIn = useCallback(async () => {
+        if (!auth) throw new Error('Firebase not configured');
+        const result = await signInAnonymously(auth);
+        const guestNum = Math.floor(Math.random() * 9000) + 1000;
+        const guestName = `Guest_${guestNum}`;
+        await updateProfile(result.user, { displayName: guestName });
+        await saveUserProfile(result.user.uid, {
+            name: guestName,
+            email: '',
+            avatar: `https://api.dicebear.com/7.x/thumbs/svg?seed=${guestNum}`,
+            university: '',
+        });
+        const p = await fetchProfile(result.user.uid);
+        setProfile(p);
+    }, []);
+
     // Log out
     const logOut = useCallback(async () => {
         if (!auth) return;
@@ -166,7 +185,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, profile, loading, signUp, logIn, googleSignIn, logOut }}>
+        <AuthContext.Provider value={{ user, profile, loading, signUp, logIn, googleSignIn, guestSignIn, logOut }}>
             {children}
         </AuthContext.Provider>
     );
